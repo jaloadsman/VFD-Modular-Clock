@@ -14,6 +14,7 @@
  */
 
 /* Updates by William B Phelps
+ * 16nov12 fix auto dim for iv-17 display
  * 14nov12 fix bug in adst.c for southern hemisphere - use || not && !
  * 12nov12 add Auto dim/brt feature
  * 11nov12 interrupt driven GPS read,
