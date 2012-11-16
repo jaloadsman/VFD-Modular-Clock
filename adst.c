@@ -97,9 +97,9 @@ uint8_t getDSToffset(tmElements_t* te, DST_Rules* rules)
 			return(0);  // return 0
 	}
 	else {  // southern hemisphere
-		if ((seconds_now >= DSTstart) || (seconds_now < DSTend))  // fall ahead 14nov12/wbp
+		if ((seconds_now >= DSTstart) || (seconds_now < DSTend))  // spring ahead 14nov12/wbp
 			return(rules->Offset);  // return Offset
-		else  // spring back
+		else  // fall back
 			return(0);  // return 0
 	}
 }
