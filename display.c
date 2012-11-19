@@ -45,7 +45,7 @@ uint8_t calculate_segments_7(uint8_t character);
 enum shield_t shield = SHIELD_NONE;
 uint8_t digits = 6;
 uint8_t mpx_count = 8;  // wm
-volatile char data[8]; // Digit data
+volatile char data[10]; // Digit data (with a little extra room)
 uint8_t us_counter = 0; // microsecond counter
 uint8_t multiplex_counter = 0;
 #ifdef FEATURE_WmGPS
@@ -85,7 +85,9 @@ void detect_shield(void)
 		(((SIGNATURE_PIN & _BV(SIGNATURE_BIT_0)) ? 0b1   : 0) |
 		 ((SIGNATURE_PIN & _BV(SIGNATURE_BIT_1)) ? 0b10  : 0) |
 		 ((SIGNATURE_PIN & _BV(SIGNATURE_BIT_2)) ? 0b100 : 0 ));
-
+	// set common defaults
+	mpx_count = 8;
+	g_has_dots = true;
 	switch (sig) {
 		case(1):  // IV-17 shield
 			shield = SHIELD_IV17;
@@ -96,20 +98,15 @@ void detect_shield(void)
 		case(2):  // IV-6 shield
 			shield = SHIELD_IV6;
 			digits = 6;
-			mpx_count = 8;
-			g_has_dots = true;
 			break;
 		case(6):  // IV-22 shield
 			shield = SHIELD_IV22;
 			digits = 4;
-			mpx_count = 8;
-			g_has_dots = true;
 			break;
 		case(7):  // IV-18 shield (note: save value as no shield - all bits on)
 			shield = SHIELD_IV18;
 			digits = 8;
 			mpx_count = 7; 
-			g_has_dots = true;
 			break;
 		default:
 			shield = SHIELD_NONE;
@@ -388,6 +385,7 @@ uint8_t print_digits(int8_t num, uint8_t offset)
 	return offset+2;
 }
 
+#ifdef skip01
 uint8_t print_digits4(int num, uint8_t offset)
 {
 //	if (num < 0) {
@@ -403,6 +401,7 @@ uint8_t print_digits4(int num, uint8_t offset)
 	data[offset] = num % 10;
 	return offset+4;
 }
+#endif
 
 uint8_t print_ch(char ch, uint8_t offset)
 {
@@ -426,9 +425,10 @@ uint8_t print_strn(char* str, uint8_t offset, uint8_t n)
 {
 	uint8_t i = 0;
 
-	while (n-- >= 0) {
-		data[offset++] = str[i++];
+//	while (n-- >= 0) {
+	while (n-- > 0) {
 		if (str[i] == '\0') break;
+		data[offset++] = str[i++];
 	}
 
 	return offset;
@@ -683,20 +683,19 @@ void set_string(char* str)
 void show_setting_string(char* short_str, char* long_str, char* value, bool show_setting)
 {
 	data[0] = data[1] = data[2] = data[3] = data[4] = data[5] = data[6] = data[7] = ' ';
-
 	if (get_digits() == 8) {
 		set_string(short_str);
-		print_strn(value, 4, 3);
+		print_strn(value, 4, 4);
 	}
 	else if (get_digits() == 6) {
 		if (show_setting)
-			print_strn(value, 2, 3);
+			print_strn(value, 2, 4);
 		else
 			set_string(long_str);
 	}
 	else {
 		if (show_setting)
-			print_strn(value, 0, 3);
+			print_strn(value, 0, 4);
 		else
 			set_string(short_str);
 	}
@@ -777,7 +776,6 @@ void show_date(tmElements_t *te_, uint8_t region)
 void show_setting_int(char* short_str, char* long_str, int value, bool show_setting)
 {
 	data[0] = data[1] = data[2] = data[3] = data[4] = data[5] = data[6] = data[7] = ' ';
-
 	if (get_digits() == 8) {
 		set_string(long_str);
 		print_digits(value, 6);
@@ -788,7 +786,7 @@ void show_setting_int(char* short_str, char* long_str, int value, bool show_sett
 		else
 			set_string(long_str);
 	}
-	else {
+	else {  // 4 digits
 		if (show_setting)
 			print_digits(value, 2);
 		else
@@ -796,6 +794,7 @@ void show_setting_int(char* short_str, char* long_str, int value, bool show_sett
 	}
 }
 
+#ifdef skip1
 void show_setting_int4(char* short_str, char* long_str, int value, bool show_setting)
 {
 	data[0] = data[1] = data[2] = data[3] = data[4] = data[5] = data[6] = data[7] = ' ';
@@ -804,6 +803,12 @@ void show_setting_int4(char* short_str, char* long_str, int value, bool show_set
 		set_string(long_str);
 		print_digits4(value, 4);
 	}
+	else if (get_digits() == 6) {
+		if (show_setting)
+			print_digits(value, 2);
+		else
+			set_string(short_str);
+	}
 	else {
 		if (show_setting)
 			print_digits4(value, 0);
@@ -811,6 +816,7 @@ void show_setting_int4(char* short_str, char* long_str, int value, bool show_set
 			set_string(short_str);
 	}
 }
+#endif
 
 void show_set_time(void)
 {
@@ -869,36 +875,6 @@ void show_alarm_off(void)
 		set_string(" off");
 	}
 }
-
-#ifdef FEATURE_SET_DATE
-void show_set_year(void)
-{
-	if (get_digits() == 8)
-		set_string("Set Year");
-	else if (get_digits() == 6)
-		set_string(" Year ");
-	else
-		set_string("Year");
-}
-void show_set_month(void)
-{
-	if (get_digits() == 8)
-		set_string("Set Mnth");
-	else if (get_digits() == 6)
-		set_string(" Month");
-	else
-		set_string("Mnth");
-}
-void show_set_day(void)
-{
-	if (get_digits() == 8)
-		set_string("Set Day ");
-	else if (get_digits() == 6)
-		set_string(" Day  ");
-	else
-		set_string("Day ");
-}
-#endif
 
 // Write 8 bits to HV5812 driver
 void write_vfd_8bit(uint8_t data)
