@@ -14,6 +14,8 @@
  */
 
 /* Updates by John A Loadsman
+ * 01Dec12 NSW DST rules made default
+ *         GPS error beeps commented out of gps.c
  * 01Dec12 FEATURE_AUTO_DIM_LED merged into WBP's Menu_Time
  * 19Nov12 GPS error beeps in gps.c made dependent on define FEATURE_GPS_DEBUG
  *         Autodim code in main loop made dependent on define FEATURE_AUTO_DIM

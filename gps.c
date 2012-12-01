@@ -217,9 +217,9 @@ GPSerror1:
 GPSerror2:
 		g_gps_time_errors++;  // increment error count
 GPSerror2a:
-#ifdef FEATURE_GPS_DEBUG  // ifdef added by JAL
-		beep(2093,1);  // error signal - I'm leaving this in for now /wm
-#endif
+// #ifdef FEATURE_GPS_DEBUG  // ifdef added by JAL
+// 		beep(2093,1);  // error signal - I'm leaving this in for now /wm
+// #endif
 		flash_display(200);  // flash display to show GPS error
 		strcpy(gpsBuffer, "");  // wipe GPS buffer
 	}  // if "$GPRMC"
