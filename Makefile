@@ -15,7 +15,7 @@
 
 #MHV AVR doesn't look for ~/user.mk ???
 ifeq ($(AVRDUDE_PROGRAMMER), )
-AVRDUDE_PROGRAMMER = usbtiny
+AVRDUDE_PROGRAMMER = usbasp
 endif
 
 SILENT ?= @
