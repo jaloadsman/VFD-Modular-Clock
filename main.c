@@ -14,6 +14,7 @@
  */
 
 /* Updates by John A Loadsman
+ * 05Jan13 scrolling messages adjusted for JL's clock
  * 01Dec12 NSW DST rules made default
  *         GPS error beeps commented out of gps.c
  * 01Dec12 FEATURE_AUTO_DIM_LED merged into WBP's Menu_Time
@@ -28,6 +29,8 @@
 *todo:
  * ?
  *
+ * 02jan13 generalize scrolling, add holiday messages
+ * 30nov12 fix rule0 limits (again)
  * 26nov12 put menu_items in PROGMEM!
  * 25nov12 add alarm & time to menu
  * 25nov12 fix time/alarm set repeat interval
@@ -282,12 +285,28 @@ ISR( PCINT2_vect )
 }
 
 uint8_t scroll_ctr;
+
 void display_time(display_mode_t mode)  // (wm)  runs approx every 100 ms
 {
 	static uint16_t counter = 0;
 #ifdef FEATURE_AUTO_DATE
 	if (mode == MODE_DATE) {
-		show_date(tm_, g_Region, (scroll_ctr++) * 10 / 38);  // show date from last rtc_get_time() call
+#ifdef FEATURE_MESSAGES
+		if ((tm_->Month == 1) && (tm_->Day == 1)) {
+			set_scroll("Happy New Year");
+			show_scroll(scroll_ctr++*10/24);  // show BD message
+			}
+		else if ((tm_->Month == 12) && (tm_->Day == 25)) {
+			set_scroll("Merry Christmas");
+			show_scroll(scroll_ctr++*10/24);  // show BD message
+			}
+  		else if ((tm_->Month == 3) && (tm_->Day == 1)) {
+  			set_scroll("Happy Birthday John");
+  			show_scroll(scroll_ctr++*10/24);  // show BD message
+  			}
+		else
+#endif		
+			show_date(tm_, g_Region, (scroll_ctr++) * 10 / 38);  // show date from last rtc_get_time() call
 	}
 	else
 #endif	
@@ -409,6 +428,14 @@ void main(void)
 	_delay_ms(500);
 	//set_string("--------");
 
+#ifdef FEATURE_MESSAGES
+	set_scroll("Hello there Dr John");
+	for (scroll_ctr = 0; scroll_ctr<20; scroll_ctr++) {
+		show_scroll(scroll_ctr);
+		_delay_ms(200);
+	}
+#endif
+	
 	while (1) {  // << ===================== MAIN LOOP ===================== >>
 		get_button_state(&buttons);
 		// When alarming:
