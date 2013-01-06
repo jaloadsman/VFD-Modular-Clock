@@ -290,6 +290,8 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 100 ms
 {
 	static uint16_t counter = 0;
 #ifdef FEATURE_AUTO_DATE
+// display the date (or other message) once a minute just before (just after in JL's version) the minute changes
+// the timing is tuned such that the clock shows the time again at 59 1/2 (9.5 in JL's version) seconds
 	if (mode == MODE_DATE) {
 #ifdef FEATURE_MESSAGES
 		if ((tm_->Month == 1) && (tm_->Day == 1)) {
@@ -300,10 +302,12 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 100 ms
 			set_scroll("Merry Christmas");
 			show_scroll(scroll_ctr++*10/24);  // show BD message
 			}
+// use this block to display a message on someone's birthday
   		else if ((tm_->Month == 3) && (tm_->Day == 1)) {
   			set_scroll("Happy Birthday John");
   			show_scroll(scroll_ctr++*10/24);  // show BD message
   			}
+
 		else
 #endif		
 			show_date(tm_, g_Region, (scroll_ctr++) * 10 / 38);  // show date from last rtc_get_time() call
@@ -429,11 +433,13 @@ void main(void)
 	//set_string("--------");
 
 #ifdef FEATURE_MESSAGES
+// use this to display a message when the clock is plugged in
 	set_scroll("Hello there Dr John");
 	for (scroll_ctr = 0; scroll_ctr<20; scroll_ctr++) {
 		show_scroll(scroll_ctr);
 		_delay_ms(200);
 	}
+
 #endif
 	
 	while (1) {  // << ===================== MAIN LOOP ===================== >>
