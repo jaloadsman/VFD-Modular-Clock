@@ -29,6 +29,7 @@
 *todo:
  * ?
  *
+ * 04mar13 fix crash caused by display mpx timer int
  * 22feb13 10 step volume
  * 02jan13 generalize scrolling, add holiday messages
  * 30nov12 fix rule0 limits (again)
@@ -233,7 +234,7 @@ void initialize(void)
 		seed_random(tm_->Hour * 10000 + tm_->Minute + 100 + tm_->Second);
 #endif
 
-	beep(1100, 75);
+	beep(880, 75);
 	_delay_ms(75);
 	menu_init();  // must come after display, flw init
 	rtc_get_alarm_s(&alarm_hour, &alarm_min, &alarm_sec);
@@ -409,7 +410,8 @@ void main(void)
 	// Counters used when setting time
 	uint16_t button_released_timer = 0;
 	uint16_t button_speed = 2;
-	
+
+/* ***	
 	switch (shield) {
 		case(SHIELD_IV6):
 			set_string("IV-6");
@@ -426,11 +428,15 @@ void main(void)
 		default:
 			break;
 	}
+   *** */	
 
 	beep(440, 75);
 
 	_delay_ms(500);
 	//set_string("--------");
+#ifdef FEATURE_BIGBEN
+	ben1(2); ben3(2);
+#endif
 
 #ifdef FEATURE_MESSAGES
 // use this to display a message when the clock is plugged in
@@ -625,6 +631,32 @@ void main(void)
 #ifdef FEATURE_AUTO_DIM_LED
 				LED_HIGH; // turn on LED light bar at ABTH (JAL 18Nov12)
 #endif
+			}
+		}
+#endif
+
+#ifdef FEATURE_BIGBEN
+		if ((g_BigBen) && (tm_->Second == 0))  {  // Big Ben enabled?
+			if (tm_->Minute == 15) {
+				ben1(2);
+			}
+			else if (tm_->Minute == 30) {
+				ben2(1); ben3(2);
+			}
+			else if (tm_->Minute == 45) {
+				ben4(1); ben5(1); ben1(2);
+			}
+			else if (tm_->Minute == 0) {
+				ben2(1); ben3(1); ben4(1); ben5(1);
+				uint8_t h = tm_->Hour;
+				// if (!g_24h_clock) {
+					if (h>12)  h = h-12;
+					if (h==0)  h = 12;
+				//}
+				for (uint8_t i = 0; i<h; i++) {
+					_delay_ms(500);
+					note(4,4,32);  // E(4)
+				}
 			}
 		}
 #endif
