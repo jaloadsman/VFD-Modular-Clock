@@ -14,6 +14,7 @@
  */
 
 /* Updates by John A Loadsman
+ * 07Mar13 WBP's variables for birthday message not used (what if you want to display more than one birthday?)
  * 05Jan13 scrolling messages adjusted for JL's clock
  * 01Dec12 NSW DST rules made default
  *         GPS error beeps commented out of gps.c
@@ -28,7 +29,9 @@
 /* Updates by William B Phelps
 *todo:
  * ?
- *
+ * 06mar13 "reveille" sound for alarm
+ * 06mar13 stop alarm if switched off while sounding
+ * 05mar13 add vars for birthday message
  * 04mar13 fix crash caused by display mpx timer int
  * 22feb13 10 step volume
  * 02jan13 generalize scrolling, add holiday messages
@@ -171,6 +174,14 @@ uint16_t g_show_special_cnt = 0;  // display something special ("time", "alarm",
 tmElements_t* tm_; // current local date and time as TimeElements (pointer)
 //uint8_t alarm_hour = 0, alarm_min = 0, alarm_sec = 0;
 
+/*  // WBP's variables for birthday message not used (JAL - what if you want to display more than one birthday?)
+#ifdef FEATURE_MESSAGES
+char bdMsg[] = "Happy Birthday John";
+uint8_t bdMonth = 3;
+uint8_t bdDay = 1;
+#endif
+*/
+
 extern enum shield_t shield;
 
 void initialize(void)
@@ -219,10 +230,9 @@ void initialize(void)
 
 	piezo_init();
 	globals_init();
-	beep(440, 75);
-	_delay_ms(75);
+//	beep(440, 75);
 	display_init(g_brightness);
-
+	
 	g_alarm_switch = get_alarm_switch();
 	
 #ifdef FEATURE_FLW
@@ -234,8 +244,7 @@ void initialize(void)
 		seed_random(tm_->Hour * 10000 + tm_->Minute + 100 + tm_->Second);
 #endif
 
-	beep(880, 75);
-	_delay_ms(75);
+//	beep(880, 75);
 	menu_init();  // must come after display, flw init
 	rtc_get_alarm_s(&alarm_hour, &alarm_min, &alarm_sec);
 
@@ -306,12 +315,11 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 100 ms
 			set_scroll("Merry Christmas");
 			show_scroll(scroll_ctr++*10/24);  // show BD message
 			}
-// use this block to display a message on someone's birthday
-  		else if ((tm_->Month == 3) && (tm_->Day == 1)) {
-  			set_scroll("Happy Birthday John");
-  			show_scroll(scroll_ctr++*10/24);  // show BD message
-  			}
-
+// uncomment this block to display a message on someone's birthday
+		else if ((tm_->Month == 3) && (tm_->Day == 1)) {
+			set_scroll("Happy Birthday John");
+			show_scroll(scroll_ctr++*10/24);  // show BD message
+			}
 		else
 #endif		
 			show_date(tm_, g_Region, (scroll_ctr++) * 10 / 38);  // show date from last rtc_get_time() call
@@ -411,7 +419,6 @@ void main(void)
 	uint16_t button_released_timer = 0;
 	uint16_t button_speed = 2;
 
-/* ***	
 	switch (shield) {
 		case(SHIELD_IV6):
 			set_string("IV-6");
@@ -428,14 +435,13 @@ void main(void)
 		default:
 			break;
 	}
-   *** */	
 
-	beep(440, 75);
+//	beep(440, 75);
 
 	_delay_ms(500);
 	//set_string("--------");
-#ifdef FEATURE_BIGBEN
-	ben1(2); ben3(2);
+#ifdef FEATURE_REVEILLE
+	play_reveille();
 #endif
 
 #ifdef FEATURE_MESSAGES
@@ -445,7 +451,6 @@ void main(void)
 		show_scroll(scroll_ctr);
 		_delay_ms(200);
 	}
-
 #endif
 	
 	while (1) {  // << ===================== MAIN LOOP ===================== >>
@@ -455,15 +460,20 @@ void main(void)
 		if (g_alarming) {
 			display_time(clock_mode);  // read and display time (??)
 
-			// fixme: if keydown is detected here, wait for keyup and clear state
-			// this prevents going into the menu when disabling the alarm
-			if (buttons.b1_keydown || buttons.b1_keyup || buttons.b2_keydown || buttons.b2_keyup) {
+			// fixed: if keydown is detected here, wait for keyup and clear state
+			// this prevents going into the menu when disabling the alarm 
+			if ((!g_alarm_switch) || (buttons.b1_keydown || buttons.b1_keyup || buttons.b2_keydown || buttons.b2_keyup)) {
 				buttons.b1_keyup = 0; // clear state
 				buttons.b2_keyup = 0; // clear state
 				g_alarming = false;
+				alarm(0);  // turn alarm off
+				while (buttons.b1_keydown || buttons.b2_keydown) {  // wait for button to be released
+					_delay_ms(100);
+					get_button_state(&buttons);
+					}
 			}
 			else {
-				alarm();	
+				alarm(1);	  // turn alarm on (if not already on)
 			}
 		}
 		// If both buttons are held:
@@ -635,32 +645,6 @@ void main(void)
 		}
 #endif
 
-#ifdef FEATURE_BIGBEN
-		if ((g_BigBen) && (tm_->Second == 0))  {  // Big Ben enabled?
-			if (tm_->Minute == 15) {
-				ben1(2);
-			}
-			else if (tm_->Minute == 30) {
-				ben2(1); ben3(2);
-			}
-			else if (tm_->Minute == 45) {
-				ben4(1); ben5(1); ben1(2);
-			}
-			else if (tm_->Minute == 0) {
-				ben2(1); ben3(1); ben4(1); ben5(1);
-				uint8_t h = tm_->Hour;
-				// if (!g_24h_clock) {
-					if (h>12)  h = h-12;
-					if (h==0)  h = 12;
-				//}
-				for (uint8_t i = 0; i<h; i++) {
-					_delay_ms(500);
-					note(4,4,32);  // E(4)
-				}
-			}
-		}
-#endif
-
 #ifdef FEATURE_WmGPS
 		if (g_gps_enabled) {
 			if (gpsDataReady()) {
@@ -673,7 +657,7 @@ void main(void)
 			_delay_ms(2);
 #endif
 
-		_delay_ms(74);  // tuned so loop runs 10 times a second
+		_delay_ms(70);  // tuned so loop runs 10 times a second ?
 
 		}  // while (1)
 }  // main()
