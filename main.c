@@ -13,6 +13,17 @@
  *
  */
 
+/* Updates by John A Loadsman
+* 05Jan13 scrolling messages adjusted for JL's clock
+* 01Dec12 NSW DST rules made default
+* GPS error beeps commented out of gps.c
+* 01Dec12 FEATURE_AUTO_DIM_LED merged into WBP's Menu_Time
+* Autodim code in main loop made dependent on define FEATURE_AUTO_DIM
+* External LED lighting control added using original second indicator code (via PD7 in left shield connector) with FEATURE_AUTO_DIM_LED
+* NSW time zone defaults used for AutoDST (instead of US default)
+* Autotime set to 04 instead of 54 to display time and date at start of minute in FLW mode
+*/
+
 /* Updates by William B Phelps
 *todo:
  * ?
@@ -86,6 +97,8 @@
  *  minor typos & cleanup
  */
 
+#define FEATURE_AUTO_DIM_LED //Needed for external LED control - JAL 01Dec12
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
@@ -115,11 +128,11 @@
 #include "gps.h"
 #endif
 
-// Second indicator LED (optional second indicator on shield)
+// Second indicator LED (code from original for optional second indicator on shield via PD7 on left shield connector)
+// PD7 LED control used in this version for switching overhead LED lighting on/off with Autodim control - JAL 18Nov12
 #define LED_BIT PD7
 #define LED_DDR DDRD
 #define LED_PORT PORTD
-#define LED_HIGH LED_PORT |= _BV(LED_BIT)
 #define LED_HIGH LED_PORT |= _BV(LED_BIT)
 #define LED_LOW  LED_PORT &= ~(_BV(LED_BIT))
 
@@ -149,7 +162,8 @@
 //#ifdef FEATURE_AUTO_DATE
 //uint16_t g_autodisp = 50;  // how long to display date 5.0 seconds
 //#endif
-uint8_t g_autotime = 55;  // controls when to display date and when to display time in FLW mode
+//uint8_t g_autotime = 55;  // controls when to display date and when to display time in FLW mode
+uint8_t g_autotime = 4;  // controls when to display date and when to display time in FLW mode on JL's clock
 
 uint8_t g_alarming = false; // alarm is going off
 uint16_t snooze_count = 0; // alarm snooze counter
@@ -163,12 +177,12 @@ tmElements_t* tm_; // current local date and time as TimeElements (pointer)
 //uint8_t alarm_hour = 0, alarm_min = 0, alarm_sec = 0;
 
 #ifdef FEATURE_MESSAGES
-//uint8_t bdMonth = 2;
-//uint8_t bdDay = 28;
-//char bdMsg[] = "Happy Birthday John";
 uint8_t bdMonth = 3;
-uint8_t bdDay = 14;
-char bdMsg[] = "Happy Birthday William";
+uint8_t bdDay = 1;
+char bdMsg[] = "Happy Birthday John";
+//uint8_t bdMonth = 3;
+//uint8_t bdDay = 14;
+//char bdMsg[] = "Happy Birthday William";
 #endif
 
 extern enum shield_t shield;
@@ -192,14 +206,20 @@ void initialize(void)
 	BUTTON_PORT |= _BV(BUTTON2_BIT);
 	SWITCH_PORT |= _BV(SWITCH_BIT);
 
-	LED_DDR  |= _BV(LED_BIT); // indicator led
+	LED_DDR |= _BV(LED_BIT); // indicator led (now used to control LED light bar via PD7 - JAL 18Nov12)
 
-	for (int i = 0; i < 5; i++) {
+/* 	for (int i = 0; i < 5; i++) { // (original code blinked LED on PD7 at startup - JAL 18Nov12)
 		LED_HIGH;
 		_delay_ms(100);
 		LED_LOW;
 		_delay_ms(100);
 	}
+*/
+
+#ifdef FEATURE_AUTO_DIM_LED
+	LED_HIGH; // defaults to LED light bar -on- at startup (JAL 18Nov12)
+		  // subsequent control is via Autodim
+#endif
 	
 	sei();
 	twi_init_master();
@@ -369,7 +389,7 @@ void display_time(void)  // (wm)  runs approx every 100 ms
 #endif		
 #ifdef FEATURE_FLW
 		if (clock_mode == MODE_FLW) {
-			if ((tm_->Second >= g_autotime - 3) && (tm_->Second < g_autotime))
+			if ((tm_->Second >= g_autotime - 4) && (tm_->Second < g_autotime))
 				show_time(tm_, g_24h_clock, 0); // show time briefly each minute
 			else
 				show_flw(tm_); // otherwise show FLW
@@ -467,8 +487,8 @@ void main(void)
 
 #ifdef FEATURE_MESSAGES
 // uncomment these to display a message when the clock is plugged in
-//	show_scroll("Hello World");
-	show_scroll(bdMsg);  // show birthday message
+	show_scroll("Hello there Dr John");
+//	show_scroll(bdMsg);  // show birthday message
 	_delay_ms(500);
 #endif
 
@@ -664,9 +684,15 @@ long t1, t2;
 		if ((g_AutoDim) && (tm_->Minute == 0) && (tm_->Second == 0))  {  // Auto Dim enabled?
 			if (tm_->Hour == g_AutoDimHour) {
 				set_brightness(g_AutoDimLevel);
+#ifdef FEATURE_AUTO_DIM_LED
+				LED_LOW; // turn off LED light bar at ADMH (JAL 18Nov12)
+#endif
 			}
 			else if (tm_->Hour == g_AutoBrtHour) {
 				set_brightness(g_AutoBrtLevel);
+#ifdef FEATURE_AUTO_DIM_LED
+				LED_HIGH; // turn on LED light bar at ABTH (JAL 18Nov12)
+#endif
 			}
 		}
 #endif
