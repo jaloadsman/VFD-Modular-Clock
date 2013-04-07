@@ -93,10 +93,10 @@ uint8_t getDSToffset(tmElements_t* te, int8_t rules[9])
 			return(0);  // return 0
 	}
 	else {  // southern hemisphere
-		if ((seconds_now >= DSTend) || (seconds_now < DSTstart))  // spring ahead 14nov12/wbp
-			return(rules[8]);  // return Offset
-		else  // fall back
+		if ((seconds_now >= DSTend) && (seconds_now < DSTstart))  // fall back 07Apr13/JAL
 			return(0);  // return 0
+		else  // spring ahead 07Apr13/JAL
+			return(rules[8]);  // return Offset
 	}
 }
 

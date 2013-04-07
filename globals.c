@@ -54,7 +54,7 @@ uint8_t EEMEM b_AutoBrtLevel = 8;
 #endif
 #ifdef FEATURE_AUTO_DST
 //DST_Rules dst_rules = {{3,1,2,2},{11,1,1,2},1};   // initial values from US DST rules as of 2011
-//DST_Rules dst_rules = {{10,1,1,2},{4,1,1,2},1};   // DST Rules for parts of OZ including NSW (for JL)
+//DST_Rules dst_rules = {{10,1,1,2},{4,1,1,3},1};   // DST Rules for parts of OZ including NSW (for JL)
 #define DST_NSW
 #ifdef DST_NSW
 uint8_t EEMEM b_DST_Rule0 = 10;  // DST start month
@@ -64,7 +64,7 @@ uint8_t EEMEM b_DST_Rule3 = 2;  // DST start hour
 uint8_t EEMEM b_DST_Rule4 = 4; // DST end month
 uint8_t EEMEM b_DST_Rule5 = 1;  // DST end dotw
 uint8_t EEMEM b_DST_Rule6 = 1;  // DST end week
-uint8_t EEMEM b_DST_Rule7 = 2;  // DST end hour
+uint8_t EEMEM b_DST_Rule7 = 3;  // DST end hour
 uint8_t EEMEM b_DST_Rule8 = 1;  // DST offset
 #else
 uint8_t EEMEM b_DST_Rule0 = 3;  // DST start month
