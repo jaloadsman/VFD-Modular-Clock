@@ -27,6 +27,9 @@
 /* Updates by William B Phelps
 *todo:
  * ?
+ 
+ * 05may13 add new data check in parseGPSdata()
+ * 06apr13 fix auto dst southern hemisphere bug
  * 10mar13 add millis()
  * 07mar13 new timer driven scroll
  * 06mar13 snooze feature
@@ -492,7 +495,7 @@ void main(void)
 	_delay_ms(500);
 #endif
 
-long t1, t2;
+unsigned long t1, t2;
 	
 	while (1) {  // << ===================== MAIN LOOP ===================== >>
 		t1 = millis();
