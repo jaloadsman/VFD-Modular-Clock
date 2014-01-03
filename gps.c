@@ -245,11 +245,11 @@ void parseGPSdata(char *gpsBuffer) {
 //		beep(880,200);  // error beep
 ParseError:
 		g_gps_parse_errors++;  // increment error count
-		beep(1100,100);  // error beep
+		//beep(1100,100);  // error beep
 		goto Error2a;
 TimeError:
 		g_gps_time_errors++;  // increment error count
-		beep(2200,100);  // error signal - I'm leaving this in for now /wm
+		//beep(2200,100);  // error signal - I'm leaving this in for now /wm
 Error2a:
 //		flash_display();  // flash display to show GPS error
 		strcpy(gpsBuffer, "");  // wipe GPS buffer

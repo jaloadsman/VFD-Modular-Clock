@@ -49,6 +49,7 @@ struct __globals globals = {
 	0, 0, // DST mode, offset
 #endif
 #ifdef FEATURE_AUTO_DST  // DST rules
+#define DST_NSW
 #ifdef DST_NSW
 	{ 10,1,1,2, 4,1,1,3, 1 },
 #else
