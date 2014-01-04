@@ -383,7 +383,8 @@ void display_time(void)  // (wm)  runs approx every 100 ms
 #endif		
 #ifdef FEATURE_FLW
 		if (clock_mode == MODE_FLW) {
-			if ((tm_->Second >= g_autotime - 3) && (tm_->Second < g_autotime))
+//			if ((tm_->Second >= g_autotime - 3) && (tm_->Second < g_autotime))
+			if ((tm_->Second >= g_autotime - 4) && (tm_->Second < g_autotime)) // JL tweak to make time display at sec=0 in FLW mode
 				show_time(tm_, globals.clock_24h, 0); // show time briefly each minute
 			else
 				show_flw(tm_); // otherwise show FLW
